@@ -1,19 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Estrutura para armazenar um bloco de memória e sua contagem de referências
-typedef struct MemBlock {
-    void* endereco;          // Endereço do bloco de memória
-    int contagem_ref;        // Contador de referências
-} MemBlock;
-
-// Lista de blocos (limite fixo para simplificação)
 #define MAX_BLOCOS 100
-MemBlock blocos[MAX_BLOCOS];
-int total_blocos = 0;        // Número atual de blocos gerenciados
 
-// Função para encontrar um bloco pelo endereço
-int encontrar_bloco(void* endereco) {
+// Estrutura para armazenar informações sobre os blocos
+typedef struct {
+    void* endereco;
+    int referencias;
+} Bloco;
+
+Bloco blocos[MAX_BLOCOS];
+int total_blocos = 0;
+
+// Função para alocar memória
+void* malloc2(size_t tamanho) {
+    if (total_blocos >= MAX_BLOCOS) {
+        printf("Erro: Limite de blocos atingido.\n");
+        exit(1);
+    }
+
+    void* memoria = malloc(tamanho);
+    if (memoria == NULL) {
+        printf("Erro: Falha ao alocar memória.\n");
+        exit(1);
+    }
+
+    blocos[total_blocos].endereco = memoria;
+    blocos[total_blocos].referencias = 1;
+    total_blocos++;
+
+    return memoria;
+}
+
+// Função para encontrar o índice de um bloco
+int encontra_bloco(void* endereco) {
     for (int i = 0; i < total_blocos; i++) {
         if (blocos[i].endereco == endereco) {
             return i;
@@ -22,53 +42,33 @@ int encontrar_bloco(void* endereco) {
     return -1;
 }
 
-// Função para alocar memória e registrar o bloco
-void* malloc2(size_t tamanho) {
-    if (total_blocos >= MAX_BLOCOS) {
-        fprintf(stderr, "Erro: Limite de blocos excedido.\n");
-        exit(EXIT_FAILURE);
+// Função para liberar memória
+void libera_bloco(int indice) {
+    free(blocos[indice].endereco);
+    for (int i = indice; i < total_blocos - 1; i++) {
+        blocos[i] = blocos[i + 1];
     }
-
-    void* endereco = malloc(tamanho);
-    if (!endereco) {
-        fprintf(stderr, "Erro: Falha ao alocar memória.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    blocos[total_blocos].endereco = endereco;
-    blocos[total_blocos].contagem_ref = 1;
-    total_blocos++;
-
-    return endereco;
+    total_blocos--;
 }
 
-// Função para atualizar o endereço de um ponteiro e gerenciar as referências
-void atrib2(void** ponteiro_antigo, void* novo_endereco) {
-    if (*ponteiro_antigo != NULL) {
-        int indice = encontrar_bloco(*ponteiro_antigo);
-        if (indice != -1) {
-            blocos[indice].contagem_ref--;
-            if (blocos[indice].contagem_ref == 0) {
-                free(blocos[indice].endereco); // Libera a memória
-                blocos[indice] = blocos[--total_blocos]; // Remove o bloco da lista
+// Função para atualizar referências
+void atrib2(void** antigo, void* novo) {
+    if (*antigo != NULL) {
+        int indice_antigo = encontra_bloco(*antigo);
+        if (indice_antigo != -1) {
+            blocos[indice_antigo].referencias--;
+            if (blocos[indice_antigo].referencias == 0) {
+                libera_bloco(indice_antigo);
             }
         }
     }
 
-    if (novo_endereco != NULL) {
-        int indice = encontrar_bloco(novo_endereco);
-        if (indice != -1) {
-            blocos[indice].contagem_ref++;
+    if (novo != NULL) {
+        int indice_novo = encontra_bloco(novo);
+        if (indice_novo != -1) {
+            blocos[indice_novo].referencias++;
         }
     }
 
-    *ponteiro_antigo = novo_endereco;
-}
-
-// Função para liberar toda a memória restante
-void liberar_toda_memoria() {
-    for (int i = 0; i < total_blocos; i++) {
-        free(blocos[i].endereco);
-    }
-    total_blocos = 0;
+    *antigo = novo;
 }

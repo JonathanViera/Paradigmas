@@ -2,18 +2,19 @@
 
 int main() {
     int* a = (int*)malloc2(sizeof(int));
+    int* b = (int*)malloc2(sizeof(int));
+
     *a = 10;
+    *b = 20;
 
-    int* b = NULL;
-    atrib2((void**)&b, a);  // b aponta para a
+    printf("Antes: a = %d, b = %d\n", *a, *b);
 
-    printf("Valor de a: %d\n", *a);
-    printf("Valor de b: %d\n", *b);
+    atrib2((void**)&b, a); // b agora aponta para o mesmo bloco que a
 
-    atrib2((void**)&b, NULL); // Remove referência de b
-    atrib2((void**)&a, NULL); // Remove referência de a
+    printf("Depois: a = %d, b = %d\n", *a, *b);
 
-    liberar_toda_memoria(); // Libera qualquer memória restante
+    atrib2((void**)&a, NULL); // Libera o bloco de a
+    atrib2((void**)&b, NULL); // Libera o bloco de b
 
     return 0;
 }
