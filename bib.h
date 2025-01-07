@@ -56,7 +56,7 @@ void atrib2(void** antigo, void* novo) {
     if (*antigo != NULL) {
         int indice_antigo = encontra_bloco(*antigo);
         if (indice_antigo != -1) {
-            blocos[indice_antigo].referencias--;
+            blocos[indice_antigo].referencias--; 
             if (blocos[indice_antigo].referencias == 0) {
                 libera_bloco(indice_antigo);
             }
@@ -72,3 +72,15 @@ void atrib2(void** antigo, void* novo) {
 
     *antigo = novo;
 }
+void dump()
+{
+    printf("Estado atual da memória:\n");
+    printf("Total de blocos: %d\n", total_blocos);
+    for (int i = 0; i < total_blocos; i++)
+    {
+        printf("Bloco %d: Endereço = %p, Referências = %d\n",
+               i, blocos[i].endereco, blocos[i].referencias);
+    }
+    printf("\n");
+}
+
